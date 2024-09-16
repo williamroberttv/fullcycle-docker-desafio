@@ -1,0 +1,46 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+    command: npm start
+    depends_on:
+      - database
+    networks:
+      - fullcycle
+
+  database:
+    image: postgres:latest
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: fullcycle
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - fullcycle
+    hostname: fullcycle-database
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./static:/var/www/static
+    depends_on:
+      - app
+    networks:
+      - fullcycle
+
+volumes:
+  pgdata:
+
+networks:
+  fullcycle:
