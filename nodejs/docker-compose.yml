@@ -6,26 +6,36 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - .:/app
-    command: npm start
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    command: sh -c "npm install && npm start"
     depends_on:
-      - database
+      database:
+        condition: service_healthy
     networks:
       - fullcycle
 
   database:
     image: postgres:latest
     ports:
-      - "5432:5432"
+      - "5432:${POSTGRES_PORT}"
+    env_file:
+      - .env
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: fullcycle
     volumes:
       - pgdata:/var/lib/postgresql/data
     networks:
       - fullcycle
     hostname: fullcycle-database
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h fullcycle-database -p 5432"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
 
   nginx:
     image: nginx:latest
